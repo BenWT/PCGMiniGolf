@@ -6,24 +6,25 @@ public class HoleController : MonoBehaviour {
 	[HideInInspector]
 	public CourseController course;
 	public Rigidbody ball;
+	public Transform holeObject;
 	public int par;
 	public Vector3 cameraPos;
 
 	// [HideInInspector]
 	public bool isActive = false;
 	[HideInInspector]
-	public int holeScore;
+	public int score;
 
 	bool mouseDown = false, canShoot = true;
 	Vector2 startPos;
 
 	public void Start() {
 		course = transform.parent.GetComponent<CourseController>();
-		holeScore = 0;
+		score = 0;
 	}
 
 	public void Update() {
-		if (isActive) {
+		if (isActive && course.gamestate.state != Gamestate.Score) {
 			if (Input.GetMouseButtonDown(0) && canShoot) {
 				mouseDown = true;
 				startPos = Input.mousePosition;
@@ -34,14 +35,21 @@ public class HoleController : MonoBehaviour {
 				DoShoot(deltaM.normalized, deltaM.magnitude);
 			}
 		}
+
+		// TODO: check for in hole
+		// TODO: toggle canshoot if the ball is moving
+	}
+
+	public void InHole() {
+		ball.position = new Vector3(holeObject.position.x, ball.position.y, holeObject.position.z);
+		ball.velocity = Vector3.zero;
+		ball.angularVelocity = Vector3.zero;
+
+		course.FinishHole();
 	}
 
 	public void DoShoot(Vector2 direction, float force) {
-		Debug.Log(direction.x + " " + direction.y + " " + force);
-
-		// holeScore++;
+		score++;
 		ball.AddForce(new Vector3(-direction.x, 0, -direction.y) * force);
-
-		// TODO: check for in hole
 	}
 }

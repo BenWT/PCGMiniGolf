@@ -11,7 +11,10 @@ public class GamestateController : MonoBehaviour {
 		this.state = state;
 
 		if (this.state == Gamestate.Menu) {
-			// Menu setup here
+			if (courseObject) Destroy(courseObject.gameObject);
+			// TODO: reset camera
+		} else if (this.state == Gamestate.Practice) {
+			// TODO: load practice course
 		} else if (this.state == Gamestate.Game1) {
 			if (courseObject) Destroy(courseObject.gameObject);
 			GameObject course = Instantiate(coursePrefabs[0], Vector3.zero, Quaternion.identity) as GameObject;
@@ -19,19 +22,21 @@ public class GamestateController : MonoBehaviour {
 
 			course.GetComponent<CourseController>().Begin(this);
 		} else if (this.state == Gamestate.Game2) {
-			// Load procedural course
+			// TODO: Load procedural course
 		}
 	}
 
 	void OnGUI() {
 		if (this.state == Gamestate.Menu) {
+			if (GUILayout.Button("Practice")) {
+				ChangeState(Gamestate.Practice);
+			}
 			if (GUILayout.Button("Game 1")) {
 				ChangeState(Gamestate.Game1);
 			}
-		} else if (this.state == Gamestate.Game1) {
-
-		} else if (this.state == Gamestate.Game2) {
-
+			if (GUILayout.Button("Game 2")) {
+				ChangeState(Gamestate.Game2);
+			}
 		}
 	}
 }
@@ -39,6 +44,8 @@ public class GamestateController : MonoBehaviour {
 [System.Serializable]
 public enum Gamestate {
 	Menu,
+	Practice,
 	Game1,
-	Game2
+	Game2,
+	Score
 }
