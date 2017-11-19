@@ -238,9 +238,9 @@ MonoBehaviour:
   state: 0
   courseObject: {fileID: 540466322}
   coursePrefabs:
-  - {fileID: 1653439945816876, guid: ca7e05d6c6395b043ac7e487d68c49b7, type: 2}
-  - {fileID: 1653439945816876, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-  - {fileID: 1653439945816876, guid: 926a1bec1ded45a4198b84ef7e9da1d4, type: 2}
+  - {fileID: 1653439945816876, guid: 9e2bc68c48d4846e4bdebe415b13af85, type: 2}
+  - {fileID: 1653439945816876, guid: 39f21c1b6bc154591a1d0e3578245143, type: 2}
+  - {fileID: 1653439945816876, guid: 101935ec6a91f463b8896ea8be79ff54, type: 2}
 --- !u!81 &1007208834
 AudioListener:
   m_ObjectHideFlags: 0
@@ -303,49 +303,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!1001 &1776422847
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4808298183193198, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_RootOrder
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1653439945816876, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: ef275c89109a1bf48b59b642e02d8890, type: 2}
-  m_IsPrefabParent: 0

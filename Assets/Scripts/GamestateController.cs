@@ -14,16 +14,20 @@ public class GamestateController : MonoBehaviour {
 			if (courseObject) Destroy(courseObject.gameObject);
 			// TODO: reset camera
 		} else if (this.state == Gamestate.Practice) {
-			// TODO: load practice course
+			LoadLevel (0);
 		} else if (this.state == Gamestate.Game1) {
-			if (courseObject) Destroy(courseObject.gameObject);
-			GameObject course = Instantiate(coursePrefabs[0], Vector3.zero, Quaternion.identity) as GameObject;
-			courseObject = course.GetComponent<Transform>();
-
-			course.GetComponent<CourseController>().Begin(this);
+			LoadLevel (1);
 		} else if (this.state == Gamestate.Game2) {
-			// TODO: Load procedural course
+			LoadLevel (2);
 		}
+	}
+
+	void LoadLevel(int index) {
+		if (courseObject) Destroy(courseObject.gameObject);
+		GameObject course = Instantiate(coursePrefabs[index], Vector3.zero, Quaternion.identity) as GameObject;
+		courseObject = course.GetComponent<Transform>();
+
+		course.GetComponent<CourseController>().Begin(this);
 	}
 
 	void OnGUI() {
