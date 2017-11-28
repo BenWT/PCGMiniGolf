@@ -1170,6 +1170,8 @@ MonoBehaviour:
   holeObject: {fileID: 4778042655335454}
   par: 3
   cameraPos: {x: 0, y: 30, z: 0}
+  ballOffset: {x: 0, y: 2, z: -3}
+  isInPreview: 1
   isActive: 0
   score: 0
 --- !u!114 &114655653436052184
@@ -1188,6 +1190,8 @@ MonoBehaviour:
   holeObject: {fileID: 4241732104949034}
   par: 3
   cameraPos: {x: 0, y: 10, z: 0}
+  ballOffset: {x: 0, y: 0, z: 0}
+  isInPreview: 1
   isActive: 0
   score: 0
 --- !u!135 &135229580377659620

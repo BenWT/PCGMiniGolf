@@ -15,6 +15,7 @@ public class CourseController : MonoBehaviour {
 
 	void PositionHole() {
 		Camera.main.GetComponent<Transform>().position = holes[currentHole].transform.position + holes[currentHole].cameraPos;
+		Camera.main.GetComponent<Transform>().eulerAngles = new Vector3(90, 180, 0);
 		holes[currentHole].isActive = true;
 	}
 
@@ -27,6 +28,7 @@ public class CourseController : MonoBehaviour {
 		if (currentHole >= holes.Count) {
 			gamestate.state = Gamestate.Score;
 		} else {
+			// transition  away from ball, then too next hole
 			PositionHole();
 		}
 	}
