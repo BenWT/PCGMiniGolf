@@ -1,50 +1,154 @@
-using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-// TODO Points will need to be triangulated eventually
-// This will convert the list of vertices into correct triangles that should be displayable
-// https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
+public class Course {
+    public List<Segment> pieces = new List<Segment>();
 
-public class Course<T> {
-    public T[] points { get; private set; }
-    public float fitness { get; private set; }
+	public Course() {
+        Segment s = new Segment(SegmentType.T);
+        s.width = 2.0f;
+        s.length = 3.0f;
+        pieces.Add(s);
+	}
 
-    private Random random;
-    private Func<T> getRandomPoint;
-    private Func<float, int> fitnessFunction;
+    public void AddSegment(int side, int index, float width, float length) {
+        Segment s = new Segment(SegmentType.Square, width, length);
+        s.MarkConnection(side, index);
+        pieces.Add(s);
+    }
 
-    public Course(int size, Random random, Func<T> getRandomPoint, Func<float, int> fitnessFunction, bool shouldInit = true) {
-        points = new T[size];
-        this.random = random;
-        this.getRandomPoint = getRandomPoint;
-        this.fitnessFunction = fitnessFunction;
+	public void Generate(Material mat) {
+        List<Vector3> vertices = new List<Vector3>();
+		List<int> triangles = new List<int>();
 
-        if (shouldInit) {
-            for (int i = 0; i < points.Length; i++) {
-                points[i] = getRandomPoint();
+        for (int i = 0; i < pieces.Count; i++) {
+            Segment s = pieces[i];
+
+            if (s.GetNumberOfConnections() != 0 && i != 0) {
+                if (s.GetSegmentType() == SegmentType.Square) {
+                    if (s.GetConnection(0) > -1) { // bottom connection
+                        int connection = s.GetConnection(0);
+                        s.center = pieces[connection].center + new Vector3((pieces[connection].width / 2) + (s.width / 2), 0.0f, 0.0f);
+                    } else if (s.GetConnection(1) > -1) { // left connection
+                        int connection = s.GetConnection(1);
+                        s.center = pieces[connection].center - new Vector3(0.0f, 0.0f, (pieces[connection].length / 2) + (s.length / 2));
+                    } else if (s.GetConnection(2) > -1) { // top connection
+                        int connection = s.GetConnection(2);
+                        s.center = pieces[connection].center - new Vector3((pieces[connection].width / 2) + (s.width / 2), 0.0f, 0.0f);
+                    } else if (s.GetConnection(3) > -1) { // right connection
+                        int connection = s.GetConnection(3);
+                        s.center = pieces[connection].center + new Vector3(0.0f, 0.0f, (pieces[connection].length / 2) + (s.length / 2));
+                    }
+
+                    s.startVert = vertices.Count;
+                    s.startTri = triangles.Count;
+
+                    vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
+                    vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
+                    vertices.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2)); // Top Right
+                    vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2)); // Bottom Right
+
+                    triangles.Add(s.startVert + 1);
+                    triangles.Add(s.startVert);
+                    triangles.Add(s.startVert + 3);
+
+                    triangles.Add(s.startVert + 3);
+                    triangles.Add(s.startVert + 2);
+                    triangles.Add(s.startVert + 1);
+
+                    s.vertCount = vertices.Count - s.startVert;
+                    s.triCount = triangles.Count - s.startTri;
+                } else if (s.GetSegmentType() == SegmentType.Curve) {
+
+                }
+            } else {
+                s.center = Vector3.zero;
+                s.startVert = vertices.Count;
+                s.startTri = triangles.Count;
+
+                vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
+                vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
+                vertices.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2)); // Top Right
+                vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2)); // Bottom Right
+
+                triangles.Add(s.startVert + 1);
+                triangles.Add(s.startVert);
+                triangles.Add(s.startVert + 3);
+
+                triangles.Add(s.startVert + 3);
+                triangles.Add(s.startVert + 2);
+                triangles.Add(s.startVert + 1);
+
+                s.vertCount = vertices.Count - s.startVert;
+                s.triCount = triangles.Count - s.startTri;
             }
         }
-    }
 
-    public float CalculateFitness(int index) {
-        fitness = fitnessFunction(index);
-        return fitness;
-    }
+        foreach (Segment s in pieces) {
 
-    public Course<T> Crossover(Course<T> otherParent) {
-        Course<T> child = new Course<T>(points.Length, random, getRandomPoint, fitnessFunction, false);
+            int startCount = vertices.Count;
 
-        for (int i = 0; i < points.Length; i++) {
-            child.points[i] = random.NextDouble() < 0.5 ? points[i] : otherParent.points[i];
-        }
+            vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
+            vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
+            vertices.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2)); // Top Right
+            vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2)); // Bottom Right
 
-        return child;
-    }
+            vertices.Add(s.center + new Vector3(-s.width/2, 1.0f, -s.length/2)); // Bottom Left
+            vertices.Add(s.center + new Vector3(s.width/2, 1.0f, -s.length/2)); // Top Left
+            vertices.Add(s.center + new Vector3(s.width/2, 1.0f, s.length/2)); // Top Right
+            vertices.Add(s.center + new Vector3(-s.width/2, 1.0f, s.length/2)); // Bottom Right
 
-    public void Mutate(float mutationRate) {
-        for (int i = 0; i < points.Length; i++) {
-            if (random.NextDouble() < mutationRate) {
-                points[i] = getRandomPoint();
+
+            if (s.GetConnection(0) == -1) { // bottom connection
+                triangles.Add(startCount + 3);
+                triangles.Add(startCount);
+                triangles.Add(startCount + 4);
+
+                triangles.Add(startCount + 4);
+                triangles.Add(startCount + 7);
+                triangles.Add(startCount + 3);
+            }
+            if (s.GetConnection(1) == -1) { // left connection
+                triangles.Add(startCount + 2);
+                triangles.Add(startCount + 3);
+                triangles.Add(startCount + 7);
+
+                triangles.Add(startCount + 7);
+                triangles.Add(startCount + 6);
+                triangles.Add(startCount + 2);
+            }
+            if (s.GetConnection(2) == -1) { // top connection
+                triangles.Add(startCount + 1);
+                triangles.Add(startCount + 2);
+                triangles.Add(startCount + 6);
+
+                triangles.Add(startCount + 6);
+                triangles.Add(startCount + 5);
+                triangles.Add(startCount + 1);
+            }
+            if (s.GetConnection(3) == -1) { // right connection
+                triangles.Add(startCount);
+                triangles.Add(startCount + 1);
+                triangles.Add(startCount + 5);
+
+                triangles.Add(startCount + 5);
+                triangles.Add(startCount + 4);
+                triangles.Add(startCount);
             }
         }
-    }
+
+		GameObject newObj = new GameObject("SquareTest");
+
+		Mesh m = new Mesh();
+
+		newObj.AddComponent<MeshRenderer>();
+		newObj.AddComponent<MeshFilter>().mesh = m;
+
+		m.vertices = vertices.ToArray();
+		m.triangles = triangles.ToArray();
+		m.RecalculateNormals();
+
+        newObj.GetComponent<MeshRenderer>().material = mat;
+	}
 }

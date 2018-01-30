@@ -129,13 +129,13 @@ public class ProceduralObject : MonoBehaviour {
 		CreateMesh(vertices, triangles);
 	}
 	private void GenerateCurve() {
-		// TODO: Implement
+		
 	}
 	private void GenerateParallelogram() {
-		// TODO: Implement
+		
 	}
 	private void GenerateTrapezium() {
-		// TODO: Implement
+		
 	}
 }
 
