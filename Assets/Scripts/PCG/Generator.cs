@@ -5,8 +5,8 @@ using UnityEngine;
 public class Generator : MonoBehaviour {
 
 	public Material courseMaterial;
-
-	List<Course> courses = new List<Course>();
+	public Course course;
+	public GameObject courseObj;
 
 	private int straightSegmentChance = 65;
 	private float straightWidthMin = 2.0f, straightWidthMax = 8.0f;
@@ -28,11 +28,10 @@ public class Generator : MonoBehaviour {
 	}
 
 	void OnGUI() {
-		if (GUILayout.Button("Do Generate")) {
-			courses.Add(GenerateCourse(3)); // TODO: Add variable segment count
-		}
-		if (GUILayout.Button("Create Objects")) {
-			foreach (Course c in courses) c.Generate(courseMaterial);
+		if (GUILayout.Button("Create Course")) {
+			Destroy(courseObj);
+			course = GenerateCourse(Random.Range(3, 12));
+			courseObj = course.Generate(courseMaterial);
 		}
 	}
 

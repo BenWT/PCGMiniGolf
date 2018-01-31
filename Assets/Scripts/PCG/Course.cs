@@ -18,7 +18,7 @@ public class Course {
         pieces.Add(s);
     }
 
-	public void Generate(Material mat) {
+	public GameObject Generate(Material mat) {
         List<Vector3> vertices = new List<Vector3>();
 		List<int> triangles = new List<int>();
 
@@ -85,9 +85,14 @@ public class Course {
             }
         }
 
-        foreach (Segment s in pieces) {
-
+        for (int i = 0; i < pieces.Count; i++) {
+            Segment s = pieces[i];
             int startCount = vertices.Count;
+
+            int connectionBottom = s.GetConnection(0);
+            int connectionLeft = s.GetConnection(1);
+            int connectionTop = s.GetConnection(2);
+            int connectionRight = s.GetConnection(3);
 
             vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
             vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
@@ -99,8 +104,105 @@ public class Course {
             vertices.Add(s.center + new Vector3(s.width/2, 1.0f, s.length/2)); // Top Right
             vertices.Add(s.center + new Vector3(-s.width/2, 1.0f, s.length/2)); // Bottom Right
 
+            if (connectionBottom >= 0) {
+                Segment n = pieces[connectionBottom];
 
-            if (s.GetConnection(0) == -1) { // bottom connection
+                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, -n.length/2)); // Top Left
+                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, n.length/2)); // Top Right
+
+                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, -n.length/2)); // Top Left
+                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, n.length/2)); // Top Right
+
+                triangles.Add(startCount + 8);
+                triangles.Add(startCount);
+                triangles.Add(startCount + 10);
+
+                triangles.Add(startCount + 4);
+                triangles.Add(startCount + 10);
+                triangles.Add(startCount);
+
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 7);
+                triangles.Add(startCount + 3);
+
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 11);
+                triangles.Add(startCount + 7);
+            } else if (connectionLeft >= 0) {
+                Segment n = pieces[connectionLeft];
+
+                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, -n.length/2)); // Bottom Left
+                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, -n.length/2)); // Top Left
+
+                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, -n.length/2)); // Bottom Left
+                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, -n.length/2)); // Top Left
+
+                triangles.Add(startCount + 8);
+                triangles.Add(startCount + 3);  // Y
+                triangles.Add(startCount + 10);
+
+                triangles.Add(startCount + 7); // X
+                triangles.Add(startCount + 10);
+                triangles.Add(startCount + 3); // Y
+
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 6); // Z
+                triangles.Add(startCount + 2); // W
+
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 11);
+                triangles.Add(startCount + 6); // Z
+            } else if (connectionTop >= 0) {
+                Segment n = pieces[connectionTop];
+
+                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, -n.length/2)); // Bottom Left
+                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, n.length/2)); // Bottom Right
+
+                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, -n.length/2)); // Bottom Left
+                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, n.length/2)); // Bottom Right
+
+                triangles.Add(startCount + 1);  // Y
+                triangles.Add(startCount + 8);
+                triangles.Add(startCount + 10);
+
+                triangles.Add(startCount + 10);
+                triangles.Add(startCount + 5); // X
+                triangles.Add(startCount + 1); // Y
+
+                triangles.Add(startCount + 6); // Z
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 2); // W
+
+                triangles.Add(startCount + 11);
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 6); // Z
+            } else if (connectionRight >= 0) {
+                Segment n = pieces[connectionRight];
+
+                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, n.length/2)); // Top Right
+                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, n.length/2)); // Bottom Right
+
+                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, n.length/2)); // Top Right
+                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, n.length/2)); // Bottom Right
+
+                triangles.Add(startCount + 8);
+                triangles.Add(startCount + 1);  // Y
+                triangles.Add(startCount + 10);
+
+                triangles.Add(startCount + 5); // X
+                triangles.Add(startCount + 10);
+                triangles.Add(startCount + 1); // Y
+
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 4); // Z
+                triangles.Add(startCount); // W
+
+                triangles.Add(startCount + 9);
+                triangles.Add(startCount + 11);
+                triangles.Add(startCount + 4); // Z
+            }
+
+            if (connectionBottom == -1) { // bottom connection
                 triangles.Add(startCount + 3);
                 triangles.Add(startCount);
                 triangles.Add(startCount + 4);
@@ -150,5 +252,7 @@ public class Course {
 		m.RecalculateNormals();
 
         newObj.GetComponent<MeshRenderer>().material = mat;
+
+        return newObj;
 	}
 }
