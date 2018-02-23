@@ -269,4 +269,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d90b26873856d2c48927a067a9d6c681, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  holePrefab: {fileID: 1308956555027446, guid: 6a0674f6eac584e4eb7ba30f53d78cf3, type: 2}
   courseMaterial: {fileID: 2100000, guid: ad89d6b08942d9b4f80df3e1c512e7fe, type: 2}
+  courseObj: {fileID: 0}

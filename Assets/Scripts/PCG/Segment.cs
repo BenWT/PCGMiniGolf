@@ -11,6 +11,8 @@ public class Segment {
 	public int startVert, vertCount;
 	public int startTri, triCount;
 
+	public List<Obstacle> obstacles = new List<Obstacle>();
+
 	public Segment(SegmentType type) {
 		this.type = type;
 		this.width = 1.0f;
@@ -37,12 +39,28 @@ public class Segment {
 	public SegmentType GetSegmentType() {
 		return type;
 	}
+	public bool GetConnectionPair() {
+		if (GetConnection(0) != -1 && GetConnection(2) != -1) return true;
+		else if (GetConnection(1) != -1 && GetConnection(3) != -1) return true;
+		else return false;
+	}
 	public int GetNumberOfConnections() {
 		int count = 0;
 		for (int i = 0; i < 4; i++) {
 			if (GetConnection(i) != -1) count++;
 		}
 		return count;
+	}
+	public int GetLowestConnection() {
+		int lowestConnection = 15000;
+
+		for (int i = 0; i < 4; i++) {
+			int c = GetConnection(i);
+			if (c > -1 && c < lowestConnection) lowestConnection = c;
+		}
+
+		if (lowestConnection == 15000) lowestConnection = -1;
+		return lowestConnection;
 	}
 	public int GetConnection(int connection) {
 		return connections[connection];
@@ -57,4 +75,9 @@ public enum SegmentType {
 	Square,
 	Curve,
 	Green
+}
+
+public class Obstacle {
+	public Vector3 center;
+	public float angle, x, y;
 }

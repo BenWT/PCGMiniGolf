@@ -4,17 +4,17 @@ using UnityEngine;
 
 public class Generator : MonoBehaviour {
 
+	public GameObject holePrefab;
 	public Material courseMaterial;
 	public Course course;
 	public GameObject courseObj;
 
 	private int straightSegmentChance = 65;
-	private float straightWidthMin = 2.0f, straightWidthMax = 8.0f;
-	private float straightLengthMin = 2.0f, straightLengthMax = 10.0f;
+	private float straightWidthMin = 1.5f, straightWidthMax = 5.0f;
+	private float straightLengthMin = 1.5f, straightLengthMax = 6.0f;
 
-	private float curveWidthMin = 2.0f, curveWidthMax = 8.0f;
-	private float curveLengthMin = 2.0f, curveLengthMax = 10.0f;
-	private float curveAngleMin = 10.0f, curveAngleMax = 70.0f;
+	private int obstacleChance = 75;
+	private float obstacleSizeMin = 0.1f, obstacleSizeMax = 1.0f;
 
 	private int randomPercent() {
 		return Random.Range(0, 100);
@@ -30,12 +30,14 @@ public class Generator : MonoBehaviour {
 	void OnGUI() {
 		if (GUILayout.Button("Create Course")) {
 			Destroy(courseObj);
-			course = GenerateCourse(Random.Range(3, 12));
-			courseObj = course.Generate(courseMaterial);
+			course = GenerateCourse(Random.Range(3, 5), true);
+			courseObj = course.Generate(courseMaterial, holePrefab);
+
+			Debug.Log("Score: " + course.GetScore() + ", Par: " + course.GetPar());
 		}
 	}
 
-	Course GenerateCourse(int targetCount) {
+	Course GenerateCourse(int targetCount, bool addObstacles) {
 		Course course = new Course();
 		int segmentCounter = 0;
 
@@ -48,7 +50,6 @@ public class Generator : MonoBehaviour {
 				int segment = -1, connection = -1;
 				int addChance = 100 * ((course.pieces.Count - 1) / 4);
 
-				// TODO: Add higher chance to continue path, rather than "random"
 				foreach (Segment s in course.pieces) {
 					if (s.GetSegmentType() != SegmentType.T) {
 						for (int i = 3; i >= 0; i--) {
@@ -65,24 +66,20 @@ public class Generator : MonoBehaviour {
 
 				if (segment == -1 || connection == -1) continue;
 
-				if (randomPercent() <= straightSegmentChance) {
-					bool isTopBottom = (connection == 0 || connection == 2);
-					float width = Random.Range(straightWidthMin, isTopBottom ? straightWidthMax : course.pieces[segment].width);
-					float length = Random.Range(straightLengthMin, isTopBottom ? course.pieces[segment].length : straightLengthMax);
+				bool isTopBottom = (connection == 0 || connection == 2);
+				float width = Random.Range(straightWidthMin, isTopBottom ? straightWidthMax : course.pieces[segment].width);
+				float length = Random.Range(straightLengthMin, isTopBottom ? course.pieces[segment].length : straightLengthMax);
 
-					course.AddSegment(reverseConnection(connection), segment, width, length);
-				} else {
-					bool isTopBottom = (connection == 0 || connection == 2);
-					float width = Random.Range(straightWidthMin, isTopBottom ? straightWidthMax : course.pieces[segment].width);
-					float length = Random.Range(straightLengthMin, isTopBottom ? course.pieces[segment].length : straightLengthMax);
-
-					course.AddSegment(reverseConnection(connection), segment, width, length);
-				}
+				course.AddSegment(reverseConnection(connection), segment, width, length);
 				segmentCounter++;
+
+				if (addObstacles) {
+					if (randomPercent() < obstacleChance) {
+						course.AddObstacle(course.pieces.Count - 1, Random.Range(obstacleSizeMin, obstacleSizeMax), Random.Range(obstacleSizeMin, obstacleSizeMax));
+					}
+				}
 			}
 		}
-
-		// TODO: Add Green
 
 		return course;
 	}
