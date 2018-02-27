@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Generator : MonoBehaviour {
+	List<GameObject> courses = new List<GameObject>();
 
 	public GameObject holePrefab;
-	public Material courseMaterial;
+	public Material groundMaterial, wallMaterial;
 	public Course course;
 	public GameObject courseObj;
 
@@ -28,12 +29,27 @@ public class Generator : MonoBehaviour {
 	}
 
 	void OnGUI() {
-		if (GUILayout.Button("Create Course")) {
-			Destroy(courseObj);
-			course = GenerateCourse(Random.Range(3, 5), true);
-			courseObj = course.Generate(courseMaterial, holePrefab);
+		if (GUILayout.Button("Create 100 Courses")) {
+			foreach (GameObject o in courses) Destroy(o);
+			courses.Clear();
 
-			Debug.Log("Score: " + course.GetScore() + ", Par: " + course.GetPar());
+			List<Course> courseData = new List<Course>();
+
+			for (int i = 0; i < 100; i++) {
+				Course c = GenerateCourse(Random.Range(3, 5), true);
+				courseData.Add(c);
+			}
+
+			courseData.Sort((x, y) => x.GetScore().CompareTo(y.GetScore()));
+
+			for (int i = 0; i < 100; i++) {
+				GameObject go = courseData[i].Generate(groundMaterial, wallMaterial, holePrefab, "Course-" + (i + 1));
+				go.GetComponent<Transform>().position = new Vector3(i * 25.0f, 0.0f, 0.0f);
+				courses.Add(go);
+
+				CourseInfo ci = go.AddComponent(typeof(CourseInfo)) as CourseInfo;
+				ci.Init(courseData[i].GetScore(), courseData[i].GetPar());
+			}
 		}
 	}
 
@@ -80,6 +96,9 @@ public class Generator : MonoBehaviour {
 				}
 			}
 		}
+
+		course.pieces[course.pieces.Count - 1].SetSegmentType(SegmentType.Green);
+		course.CalculateScore();
 
 		return course;
 	}

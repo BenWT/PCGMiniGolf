@@ -29,8 +29,6 @@ public class Segment {
             Debug.Log("Generating T");
         } else if (type == SegmentType.Square) {
             Debug.Log("Generating Square");
-        } else if (type == SegmentType.Curve) {
-            Debug.Log("Generating Curve");
         } else if (type == SegmentType.Green) {
             Debug.Log("Generating Green");
         }
@@ -38,6 +36,9 @@ public class Segment {
 
 	public SegmentType GetSegmentType() {
 		return type;
+	}
+	public void SetSegmentType(SegmentType type) {
+		this.type = type;
 	}
 	public bool GetConnectionPair() {
 		if (GetConnection(0) != -1 && GetConnection(2) != -1) return true;
@@ -73,7 +74,6 @@ public class Segment {
 public enum SegmentType {
 	T,
 	Square,
-	Curve,
 	Green
 }
 

@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// TODO cleanup all code
+// TODO add code comments
+// TODO maybe do something about the obstacle placement, possibly factor in size of square when sizing the obstacle
+// TODO ignore overlapping courses
+
 public class Course {
     public List<Segment> pieces = new List<Segment>();
 
@@ -11,14 +16,26 @@ public class Course {
 
 	public Course() {
         Segment s = new Segment(SegmentType.T);
-        s.width = 2.0f;
-        s.length = 3.0f;
+        s.width = 1.0f;
+        s.length = 1.5f;
         pieces.Add(s);
 	}
 
     public void AddSegment(int side, int index, float width, float length) {
         Segment s = new Segment(SegmentType.Square, width, length);
         s.MarkConnection(side, index);
+
+        // Calculate Center
+        if (s.GetConnection(0) > -1) {
+            s.center = pieces[s.GetConnection(0)].center + new Vector3((pieces[s.GetConnection(0)].width / 2) + (s.width / 2), 0.0f, 0.0f);
+        } else if (s.GetConnection(1) > -1) {
+            s.center = pieces[s.GetConnection(1)].center - new Vector3(0.0f, 0.0f, (pieces[s.GetConnection(1)].length / 2) + (s.length / 2));
+        } else if (s.GetConnection(2) > -1) {
+            s.center = pieces[s.GetConnection(2)].center - new Vector3((pieces[s.GetConnection(2)].width / 2) + (s.width / 2), 0.0f, 0.0f);
+        } else if (s.GetConnection(3) > -1) {
+            s.center = pieces[s.GetConnection(3)].center + new Vector3(0.0f, 0.0f, (pieces[s.GetConnection(3)].length / 2) + (s.length / 2));
+        }
+
         pieces.Add(s);
     }
 
@@ -36,257 +53,259 @@ public class Course {
         pieces[piece].obstacles.Add(o);
     }
 
-	public GameObject Generate(Material mat, GameObject holePrefab) {
-        List<Vector3> vertices = new List<Vector3>();
-		List<int> triangles = new List<int>();
+    public GameObject Generate(Material groundMat, Material wallMat, GameObject holePrefab, string name) {
+        List<Vector3> groundV = new List<Vector3>();
+		List<int> groundT = new List<int>();
 
-        for (int i = 0; i < pieces.Count; i++) {
-            Segment s = pieces[i];
+        List<Vector3> wallV = new List<Vector3>();
+		List<int> wallT = new List<int>();
 
-            if (s.GetNumberOfConnections() != 0 && i != 0) {
-                if (s.GetSegmentType() == SegmentType.Square) {
-                    if (s.GetConnection(0) > -1) { // bottom connection
-                        int connection = s.GetConnection(0);
-                        s.center = pieces[connection].center + new Vector3((pieces[connection].width / 2) + (s.width / 2), 0.0f, 0.0f);
-                    } else if (s.GetConnection(1) > -1) { // left connection
-                        int connection = s.GetConnection(1);
-                        s.center = pieces[connection].center - new Vector3(0.0f, 0.0f, (pieces[connection].length / 2) + (s.length / 2));
-                    } else if (s.GetConnection(2) > -1) { // top connection
-                        int connection = s.GetConnection(2);
-                        s.center = pieces[connection].center - new Vector3((pieces[connection].width / 2) + (s.width / 2), 0.0f, 0.0f);
-                    } else if (s.GetConnection(3) > -1) { // right connection
-                        int connection = s.GetConnection(3);
-                        s.center = pieces[connection].center + new Vector3(0.0f, 0.0f, (pieces[connection].length / 2) + (s.length / 2));
-                    }
+        List<Vector3> obstacleV = new List<Vector3>();
+		List<int> obstacleT = new List<int>();
 
-                    s.startVert = vertices.Count;
-                    s.startTri = triangles.Count;
+        foreach (Segment s in pieces) {
+            // Ground
+            int groundStart = groundV.Count;
 
-                    vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
-                    vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
-                    vertices.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2)); // Top Right
-                    vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2)); // Bottom Right
+            groundV.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2));
+            groundV.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2));
+            groundV.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2));
+            groundV.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2));
 
-                    triangles.Add(s.startVert + 1); triangles.Add(s.startVert); triangles.Add(s.startVert + 3);
-                    triangles.Add(s.startVert + 3); triangles.Add(s.startVert + 2); triangles.Add(s.startVert + 1);
+            groundT = AddTriangles(groundT, groundStart);
 
-                    s.vertCount = vertices.Count - s.startVert;
-                    s.triCount = triangles.Count - s.startTri;
-                }
-            } else {
-                s.center = Vector3.zero;
-                s.startVert = vertices.Count;
-                s.startTri = triangles.Count;
+            // Partial Walls
+            int wallStart = wallV.Count;
 
-                vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
-                vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
-                vertices.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2)); // Top Right
-                vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2)); // Bottom Right
-
-                triangles.Add(s.startVert + 1); triangles.Add(s.startVert); triangles.Add(s.startVert + 3);
-                triangles.Add(s.startVert + 3); triangles.Add(s.startVert + 2); triangles.Add(s.startVert + 1);
-
-                s.vertCount = vertices.Count - s.startVert;
-                s.triCount = triangles.Count - s.startTri;
-            }
-        }
-
-        for (int i = 0; i < pieces.Count; i++) {
-            Segment s = pieces[i];
-            int startCount = vertices.Count;
-
-            int connectionBottom = s.GetConnection(0);
-            int connectionLeft = s.GetConnection(1);
-            int connectionTop = s.GetConnection(2);
-            int connectionRight = s.GetConnection(3);
-
-            vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2)); // Bottom Left
-            vertices.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2)); // Top Left
-            vertices.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2)); // Top Right
-            vertices.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2)); // Bottom Right
-
-            vertices.Add(s.center + new Vector3(-s.width/2, 1.0f, -s.length/2)); // Bottom Left
-            vertices.Add(s.center + new Vector3(s.width/2, 1.0f, -s.length/2)); // Top Left
-            vertices.Add(s.center + new Vector3(s.width/2, 1.0f, s.length/2)); // Top Right
-            vertices.Add(s.center + new Vector3(-s.width/2, 1.0f, s.length/2)); // Bottom Right
-
-            if (connectionBottom >= 0) {
-                Segment n = pieces[connectionBottom];
-
-                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, -n.length/2)); // Top Left
-                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, n.length/2)); // Top Right
-                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, -n.length/2)); // Top Left
-                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, n.length/2)); // Top Right
-
-                triangles.Add(startCount + 8); triangles.Add(startCount); triangles.Add(startCount + 10);
-                triangles.Add(startCount + 4); triangles.Add(startCount + 10); triangles.Add(startCount);
-                triangles.Add(startCount + 9); triangles.Add(startCount + 7); triangles.Add(startCount + 3);
-                triangles.Add(startCount + 9); triangles.Add(startCount + 11); triangles.Add(startCount + 7);
-            } else if (connectionLeft >= 0) {
-                Segment n = pieces[connectionLeft];
-
-                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, -n.length/2)); // Bottom Left
-                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, -n.length/2)); // Top Left
-                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, -n.length/2)); // Bottom Left
-                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, -n.length/2)); // Top Left
-
-                triangles.Add(startCount + 8); triangles.Add(startCount + 3); triangles.Add(startCount + 10);
-                triangles.Add(startCount + 7); triangles.Add(startCount + 10); triangles.Add(startCount + 3);
-                triangles.Add(startCount + 9); triangles.Add(startCount + 6); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 9); triangles.Add(startCount + 11); triangles.Add(startCount + 6);
-            } else if (connectionTop >= 0) {
-                Segment n = pieces[connectionTop];
-
-                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, -n.length/2)); // Bottom Left
-                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, n.length/2)); // Bottom Right
-                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, -n.length/2)); // Bottom Left
-                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, n.length/2)); // Bottom Right
-
-                triangles.Add(startCount + 1); triangles.Add(startCount + 8); triangles.Add(startCount + 10);
-                triangles.Add(startCount + 10); triangles.Add(startCount + 5); triangles.Add(startCount + 1);
-                triangles.Add(startCount + 6); triangles.Add(startCount + 9); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 11); triangles.Add(startCount + 9); triangles.Add(startCount + 6);
-            } else if (connectionRight >= 0) {
-                Segment n = pieces[connectionRight];
-
-                vertices.Add(n.center + new Vector3(n.width/2, 0.0f, n.length/2)); // Top Right
-                vertices.Add(n.center + new Vector3(-n.width/2, 0.0f, n.length/2)); // Bottom Right
-                vertices.Add(n.center + new Vector3(n.width/2, 1.0f, n.length/2)); // Top Right
-                vertices.Add(n.center + new Vector3(-n.width/2, 1.0f, n.length/2)); // Bottom Right
-
-                triangles.Add(startCount + 8); triangles.Add(startCount + 1);  triangles.Add(startCount + 10);
-                triangles.Add(startCount + 5); triangles.Add(startCount + 10); triangles.Add(startCount + 1);
-                triangles.Add(startCount + 9); triangles.Add(startCount + 4); triangles.Add(startCount);
-                triangles.Add(startCount + 9); triangles.Add(startCount + 11); triangles.Add(startCount + 4);
+            if (s.GetConnection(0) > -1) {
+                wallV.Add(pieces[s.GetConnection(0)].center + new Vector3(pieces[s.GetConnection(0)].width/2, 0.0f, -pieces[s.GetConnection(0)].length/2));
+                wallV.Add(pieces[s.GetConnection(0)].center + new Vector3(pieces[s.GetConnection(0)].width/2, 0.5f, -pieces[s.GetConnection(0)].length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, -s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, s.length/2));
+                wallV.Add(pieces[s.GetConnection(0)].center + new Vector3(pieces[s.GetConnection(0)].width/2, 0.5f, pieces[s.GetConnection(0)].length/2));
+                wallV.Add(pieces[s.GetConnection(0)].center + new Vector3(pieces[s.GetConnection(0)].width/2, 0.0f, pieces[s.GetConnection(0)].length/2));
+            } else if (s.GetConnection(1) > -1) {
+                wallV.Add(pieces[s.GetConnection(1)].center + new Vector3(-pieces[s.GetConnection(1)].width/2, 0.0f, -pieces[s.GetConnection(1)].length/2));
+                wallV.Add(pieces[s.GetConnection(1)].center + new Vector3(-pieces[s.GetConnection(1)].width/2, 0.5f, -pieces[s.GetConnection(1)].length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, s.length/2));
+                wallV.Add(pieces[s.GetConnection(1)].center + new Vector3(pieces[s.GetConnection(1)].width/2, 0.5f, -pieces[s.GetConnection(1)].length/2));
+                wallV.Add(pieces[s.GetConnection(1)].center + new Vector3(pieces[s.GetConnection(1)].width/2, 0.0f, -pieces[s.GetConnection(1)].length/2));
+            } else if (s.GetConnection(2) > -1) {
+                wallV.Add(pieces[s.GetConnection(2)].center + new Vector3(-pieces[s.GetConnection(2)].width/2, 0.0f, pieces[s.GetConnection(2)].length/2));
+                wallV.Add(pieces[s.GetConnection(2)].center + new Vector3(-pieces[s.GetConnection(2)].width/2, 0.5f, pieces[s.GetConnection(2)].length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, -s.length/2));
+                wallV.Add(pieces[s.GetConnection(2)].center + new Vector3(-pieces[s.GetConnection(2)].width/2, 0.5f, -pieces[s.GetConnection(2)].length/2));
+                wallV.Add(pieces[s.GetConnection(2)].center + new Vector3(-pieces[s.GetConnection(2)].width/2, 0.0f, -pieces[s.GetConnection(2)].length/2));
+            } else if (s.GetConnection(3) > -1) {
+                wallV.Add(pieces[s.GetConnection(3)].center + new Vector3(pieces[s.GetConnection(3)].width/2, 0.0f, pieces[s.GetConnection(3)].length/2));
+                wallV.Add(pieces[s.GetConnection(3)].center + new Vector3(pieces[s.GetConnection(3)].width/2, 0.5f, pieces[s.GetConnection(3)].length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, -s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, -s.length/2));
+                wallV.Add(pieces[s.GetConnection(3)].center + new Vector3(-pieces[s.GetConnection(3)].width/2, 0.5f, pieces[s.GetConnection(3)].length/2));
+                wallV.Add(pieces[s.GetConnection(3)].center + new Vector3(-pieces[s.GetConnection(3)].width/2, 0.0f, pieces[s.GetConnection(3)].length/2));
             }
 
-            if (connectionBottom == -1) { // bottom connection
-                triangles.Add(startCount + 3); triangles.Add(startCount); triangles.Add(startCount + 4);
-                triangles.Add(startCount + 4); triangles.Add(startCount + 7); triangles.Add(startCount + 3);
-            }
-            if (s.GetConnection(1) == -1) { // left connection
-                triangles.Add(startCount + 2); triangles.Add(startCount + 3); triangles.Add(startCount + 7);
-                triangles.Add(startCount + 7); triangles.Add(startCount + 6); triangles.Add(startCount + 2);
-            }
-            if (s.GetConnection(2) == -1) { // top connection
-                triangles.Add(startCount + 1); triangles.Add(startCount + 2); triangles.Add(startCount + 6);
-                triangles.Add(startCount + 6); triangles.Add(startCount + 5); triangles.Add(startCount + 1);
-            }
-            if (s.GetConnection(3) == -1) { // right connection
-                triangles.Add(startCount); triangles.Add(startCount + 1); triangles.Add(startCount + 5);
-                triangles.Add(startCount + 5); triangles.Add(startCount + 4); triangles.Add(startCount);
-            }
-        }
+            wallT = AddTriangles(wallT, wallStart);
+            wallT = AddTriangles(wallT, wallStart + 4);
 
-        for (int i = 0; i < pieces.Count; i++) {
-            Segment s = pieces[i];
-            int startCount;
+            // Regular Walls
+            if (s.GetConnection(0) == -1) {
+                wallStart = wallV.Count;
+
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, -s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2));
+
+                wallT = AddTriangles(wallT, wallStart);
+            }
+            if (s.GetConnection(1) == -1) {
+                wallStart = wallV.Count;
+
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, s.length/2));
+
+                wallT = AddTriangles(wallT, wallStart);
+            }
+            if (s.GetConnection(2) == -1) {
+                wallStart = wallV.Count;
+
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, -s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, s.length/2));
+
+                wallT = AddTriangles(wallT, wallStart);
+            }
+            if (s.GetConnection(3) == -1) {
+                wallStart = wallV.Count;
+
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.0f, -s.length/2));
+                wallV.Add(s.center + new Vector3(-s.width/2, 0.5f, -s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.5f, -s.length/2));
+                wallV.Add(s.center + new Vector3(s.width/2, 0.0f, -s.length/2));
+
+                wallT = AddTriangles(wallT, wallStart);
+            }
+
+            // Obstacles
+            int obstacleStart = obstacleV.Count;
 
             foreach (Obstacle o in s.obstacles) {
-                // vertices.Add(s.center + o.center + new Vector3(-0.5f, 0.75f, -0.5f)); // Bottom Left
-                // vertices.Add(s.center + o.center + new Vector3(0.5f, 0.75f, -0.5f)); // Top Left
-                // vertices.Add(s.center + o.center + new Vector3(0.5f, 0.75f, 0.5f)); // Top Right
-                // vertices.Add(s.center + o.center + new Vector3(-0.5f, 0.75f, 0.5f)); // Bottom Right
-                // vertices.Add(s.center + o.center + new Vector3(-0.5f, 0.0f, -0.5f)); // Bottom Left
-                // vertices.Add(s.center + o.center + new Vector3(0.5f, 0.0f, -0.5f)); // Top Left
-                // vertices.Add(s.center + o.center + new Vector3(0.5f, 0.0f, 0.5f)); // Top Right
-                // vertices.Add(s.center + o.center + new Vector3(-0.5f, 0.0f, 0.5f)); // Bottom Right
-
-                // RotateAround(s.center + o.center + new Vector3(o.x/2, 0.75f, -o.y/2), s.center + o.center, 35);
-
                 float a = Random.Range(0.0f, 90.0f);
 
-                startCount = vertices.Count;
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.5f, -o.y/2), s.center + o.center, a)); // Top Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.5f, -o.y/2), s.center + o.center, a)); // Bottom Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.5f, o.y/2), s.center + o.center, a)); // Top Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.5f, o.y/2), s.center + o.center, a)); // Bottom Right
-                triangles.Add(startCount); triangles.Add(startCount + 1); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 3); triangles.Add(startCount + 2); triangles.Add(startCount + 1);
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.35f, -o.y/2), s.center + o.center, a)); // Bottom Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.35f, -o.y/2), s.center + o.center, a)); // Top Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.35f, o.y/2), s.center + o.center, a)); // Top Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.35f, o.y/2), s.center + o.center, a)); // Bottom Right
+                obstacleT = AddTriangles(obstacleT, obstacleStart);
 
-                startCount = vertices.Count;
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.5f, -o.y/2), s.center + o.center, a)); // Bottom Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.5f, -o.y/2), s.center + o.center, a)); // Top Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Bottom Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Top Left
-                triangles.Add(startCount); triangles.Add(startCount + 1); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 3); triangles.Add(startCount + 2); triangles.Add(startCount + 1);
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.35f, -o.y/2), s.center + o.center, a)); // Top Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.35f, -o.y/2), s.center + o.center, a)); // Bottom Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Bottom Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Top Left
+                obstacleT = AddTriangles(obstacleT, obstacleStart + 4);
 
-                startCount = vertices.Count;
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.5f, -o.y/2), s.center + o.center, a)); // Top Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.5f, o.y/2), s.center + o.center, a)); // Top Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Top Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Top Right
-                triangles.Add(startCount); triangles.Add(startCount + 1); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 3); triangles.Add(startCount + 2); triangles.Add(startCount + 1);
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.35f, o.y/2), s.center + o.center, a)); // Top Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.35f, -o.y/2), s.center + o.center, a)); // Top Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Top Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Top Right
+                obstacleT = AddTriangles(obstacleT, obstacleStart + 8);
 
-                startCount = vertices.Count;
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.5f, o.y/2), s.center + o.center, a)); // Top Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.5f, o.y/2), s.center + o.center, a)); // Bottom Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Top Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Bottom Right
-                triangles.Add(startCount); triangles.Add(startCount + 1); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 3); triangles.Add(startCount + 2); triangles.Add(startCount + 1);
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.35f, o.y/2), s.center + o.center, a)); // Bottom Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.35f, o.y/2), s.center + o.center, a)); // Top Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Top Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Bottom Right
+                obstacleT = AddTriangles(obstacleT, obstacleStart + 12);
 
-                startCount = vertices.Count;
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.5f, o.y/2), s.center + o.center, a)); // Bottom Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.5f, -o.y/2), s.center + o.center, a)); // Bottom Left
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Bottom Right
-                vertices.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Bottom Left
-                triangles.Add(startCount); triangles.Add(startCount + 1); triangles.Add(startCount + 2);
-                triangles.Add(startCount + 3); triangles.Add(startCount + 2); triangles.Add(startCount + 1);
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.35f, -o.y/2), s.center + o.center, a)); // Bottom Left
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.35f, o.y/2), s.center + o.center, a)); // Bottom Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, o.y/2), s.center + o.center, a)); // Bottom Right
+                obstacleV.Add(RotateAround(s.center + o.center + new Vector3(-o.x/2, 0.0f, -o.y/2), s.center + o.center, a)); // Bottom Left
+                obstacleT = AddTriangles(obstacleT, obstacleStart + 16);
             }
         }
 
-		GameObject newObj = new GameObject("SquareTest");
+        GameObject courseGO = new GameObject(name);
 
-		Mesh m = new Mesh();
+        // Initialise Ground Mesh
+        GameObject groundGO = new GameObject("Ground");
+        Mesh groundM = CreateMesh(groundV, groundT, true);
 
-		newObj.AddComponent<MeshRenderer>();
-		newObj.AddComponent<MeshFilter>().mesh = m;
+        groundGO.AddComponent<MeshFilter>().mesh = groundM;
+        groundGO.AddComponent<MeshRenderer>();
+        groundGO.AddComponent<MeshCollider>();
 
-		m.vertices = vertices.ToArray();
-		m.triangles = triangles.ToArray();
-		m.RecalculateNormals();
+        groundGO.GetComponent<MeshRenderer>().material = groundMat;
+        groundGO.GetComponent<Transform>().parent = courseGO.GetComponent<Transform>();
 
-        newObj.GetComponent<MeshRenderer>().material = mat;
+        // Initialise Walls Mesh
+        GameObject wallGO = new GameObject("Walls");
+        Mesh wallM = CreateMesh(wallV, wallT, true);
+
+        wallGO.AddComponent<MeshFilter>().mesh = wallM;
+        wallGO.AddComponent<MeshRenderer>();
+        wallGO.AddComponent<MeshCollider>();
+
+        wallGO.GetComponent<MeshRenderer>().material = wallMat;
+        wallGO.GetComponent<Transform>().parent = courseGO.GetComponent<Transform>();
+
+        // Initialise Obstacles Mesh
+        if (obstacleV.Count > 0) {
+            GameObject obstacleGO = new GameObject("Obstacles");
+            Mesh obstacleM = CreateMesh(obstacleV, obstacleT, false);
+
+            obstacleGO.AddComponent<MeshFilter>().mesh = obstacleM;
+            obstacleGO.AddComponent<MeshRenderer>();
+            obstacleGO.AddComponent<MeshCollider>();
+
+            obstacleGO.GetComponent<MeshRenderer>().material = wallMat;
+            obstacleGO.GetComponent<Transform>().parent = courseGO.GetComponent<Transform>();
+        }
 
         float w = (pieces[pieces.Count - 1].width * 3) / (2 * 4);
         float l = (pieces[pieces.Count - 1].length * 3) / (2 * 4);
         Vector3 p  = pieces[pieces.Count - 1].center + new Vector3(Random.Range(-w, w), 0.0f, Random.Range(-l, l));
 
         GameObject hole = GameObject.Instantiate(holePrefab, p, Quaternion.identity) as GameObject;
-        hole.GetComponent<Transform>().parent = newObj.GetComponent<Transform>();
+        hole.GetComponent<Transform>().parent = courseGO.GetComponent<Transform>();
 
-        CalculateScore();
+        return courseGO;
+    }
+    List<int> AddTriangles(List<int> triangles, int startCount) {
+        triangles.Add(startCount + 1);
+        triangles.Add(startCount);
+        triangles.Add(startCount + 3);
 
-        return newObj;
-	}
+        triangles.Add(startCount + 3);
+        triangles.Add(startCount + 2);
+        triangles.Add(startCount + 1);
+
+        return triangles;
+    }
+    Mesh CreateMesh(List<Vector3> v, List<int> t, bool doubleSided) {
+        if (doubleSided) {
+            v.AddRange(v);
+            t.AddRange(t);
+        }
+
+        Mesh m = new Mesh();
+        m.vertices = v.ToArray();
+        m.triangles = t.ToArray();
+
+        if (doubleSided) {
+            int[] triangles = m.triangles;
+            for (int i = (triangles.Length / 2); i < triangles.Length; i++) triangles[i] += v.Count / 2;
+            for (int i = (triangles.Length / 2); i < triangles.Length; i+=3) {
+                int temp = triangles[i + 0];
+    			triangles[i + 0] = triangles[i + 2];
+    			triangles[i + 2] = temp;
+            }
+            m.triangles = triangles;
+        }
+
+        m.RecalculateNormals();
+
+        return m;
+    }
 
     public float GetScore() {
         return score;
     }
-    void CalculateScore() {
+    public void CalculateScore() {
         int target = pieces.Count - 1;
 
         path = RecursivePath(target, new List<int>());
         path.Reverse();
 
         float distance = 0;
+        for (int i = 0; i < path.Count - 1; i++) distance += (pieces[path[i + 1]].center - pieces[path[i]].center).magnitude;
 
-        for (int i = 0; i < path.Count - 1; i++) {
-            distance += (pieces[path[i + 1]].center - pieces[path[i]].center).magnitude;
+        int numberOfStraights = 0, numberOfCorners = 0;
+        for (int i = 0; i < path.Count; i++) {
+            if (pieces[path[i]].GetConnectionPair()) numberOfStraights++;
+            else numberOfCorners++;
         }
 
-        // TODO add to Score
-        // Area of each square should affect, as well as distance
-        // Take into account if there are straight lines vs corners. Do this using the connection pair function
+        // Obstacle Count
+        int numberOfObstacles = 0;
+        foreach (int i in path) {
+            if (pieces[i].obstacles.Count > 0) numberOfObstacles++;
+        }
 
-        // TODO cleanup all code
-        // TODO add code comments
-        // TODO maybe do something about the obstacle placement, possibly factor in size of square when sizing the obstacle
-
-        score = distance;
+        score = (distance / path.Count - 1) * ((float)numberOfCorners / (float)path.Count) * numberOfObstacles;
 
         CalculatePar();
     }
@@ -306,7 +325,7 @@ public class Course {
             if (pieces[i].obstacles.Count > 0) numberOfObstacles++;
         }
 
-        par = Mathf.Max(path.Count + numberOfObstacles - 2, 2);
+        par = Mathf.Max(path.Count - 1, 2);
     }
 
     Vector3 RotateAround(Vector3 point, Vector3 pivot, float angle) {
@@ -314,17 +333,5 @@ public class Course {
         direction = Quaternion.Euler(new Vector3(0, angle, 0)) * direction;
         point = direction + pivot;
         return point;
-    }
-
-
-    // TODO remove for production
-    void PrintIntArray(List<int> toPrint) {
-        string val = "Path: ";
-
-        foreach (int i in toPrint) {
-            val += i.ToString() + " ";
-        }
-
-        Debug.Log(val);
     }
 }
