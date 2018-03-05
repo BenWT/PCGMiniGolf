@@ -5,7 +5,6 @@ using UnityEngine;
 public class Generator : MonoBehaviour {
 	List<GameObject> courses = new List<GameObject>();
 
-	public GameObject holePrefab;
 	public Material groundMaterial, wallMaterial;
 	public Course course;
 	public GameObject courseObj;
@@ -43,7 +42,7 @@ public class Generator : MonoBehaviour {
 			courseData.Sort((x, y) => x.GetScore().CompareTo(y.GetScore()));
 
 			for (int i = 0; i < 100; i++) {
-				GameObject go = courseData[i].Generate(groundMaterial, wallMaterial, holePrefab, "Course-" + (i + 1));
+				GameObject go = courseData[i].Generate(groundMaterial, wallMaterial, "Course-" + (i + 1));
 				go.GetComponent<Transform>().position = new Vector3(i * 25.0f, 0.0f, 0.0f);
 				courses.Add(go);
 

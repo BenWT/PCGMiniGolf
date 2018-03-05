@@ -53,7 +53,7 @@ public class Course {
         pieces[piece].obstacles.Add(o);
     }
 
-    public GameObject Generate(Material groundMat, Material wallMat, GameObject holePrefab, string name) {
+    public GameObject Generate(Material groundMat, Material wallMat, string name) {
         List<Vector3> groundV = new List<Vector3>();
 		List<int> groundT = new List<int>();
 
@@ -237,9 +237,11 @@ public class Course {
 
         float w = (pieces[pieces.Count - 1].width * 3) / (2 * 4);
         float l = (pieces[pieces.Count - 1].length * 3) / (2 * 4);
-        Vector3 p  = pieces[pieces.Count - 1].center + new Vector3(Random.Range(-w, w), 0.0f, Random.Range(-l, l));
+        // Vector3 p  = pieces[pieces.Count - 1].center + new Vector3(Random.Range(-w, w), 0.0f, Random.Range(-l, l));
 
-        GameObject hole = GameObject.Instantiate(holePrefab, p, Quaternion.identity) as GameObject;
+        // GameObject hole = GameObject.Instantiate(holePrefab, p, Quaternion.identity) as GameObject;
+        GameObject hole = new GameObject("Hole");
+        hole.GetComponent<Transform>().position = pieces[pieces.Count - 1].center + new Vector3(Random.Range(-w, w), 0.0f, Random.Range(-l, l));
         hole.GetComponent<Transform>().parent = courseGO.GetComponent<Transform>();
 
         return courseGO;

@@ -1,47 +1,93 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GamestateController : MonoBehaviour {
 	public Gamestate state = Gamestate.Menu;
-	public Transform courseObject;
-	public GameObject[] coursePrefabs;
+	public CourseController mainCourse;
+	public CourseController practiceCourse;
+
+	public List<Text> scoreboardText = new List<Text>();
+
+	public GameObject menuPanel;
+	public GameObject scoreboardPanel;
+	public Text ingameScore;
+	public Button practiceButton;
+	public Button studyButton;
+	public Button returnButton;
+
+	void Start() {
+		practiceButton.onClick.AddListener(Event_LoadPractice);
+		studyButton.onClick.AddListener(Event_LoadStudy);
+		returnButton.onClick.AddListener(Event_ReturnToMenu);
+
+
+				menuPanel.gameObject.SetActive((this.state == Gamestate.Menu));
+				scoreboardPanel.gameObject.SetActive((this.state == Gamestate.GameScore));
+	}
 
 	public void ChangeState(Gamestate state) {
 		this.state = state;
 
+		menuPanel.gameObject.SetActive((this.state == Gamestate.Menu));
+		scoreboardPanel.gameObject.SetActive((this.state == Gamestate.GameScore));
+
 		if (this.state == Gamestate.Menu) {
-			if (courseObject) Destroy(courseObject.gameObject);
-			// TODO: reset camera
+			Camera.main.GetComponent<Transform>().position = new Vector3(35, 65, -20);
+			Camera.main.GetComponent<Transform>().rotation = Quaternion.Euler(90, 0, 0);
 		} else if (this.state == Gamestate.Practice) {
-			LoadLevel (0);
-		} else if (this.state == Gamestate.Game1) {
-			LoadLevel (1);
-		} else if (this.state == Gamestate.Game2) {
-			LoadLevel (2);
+			practiceCourse.Begin(this, false);
+		} else if (this.state == Gamestate.Game) {
+			mainCourse.Begin(this, true);
+		} else if (this.state == Gamestate.GameScore) {
+			int total = 0;
+
+			for (int i = 0; i < 12; i++) {
+				scoreboardText[i].text = mainCourse.holes[mainCourse.randomHoleOrder[i]].score.ToString();
+				total += mainCourse.holes[mainCourse.randomHoleOrder[i]].score;
+			}
+
+			scoreboardText[12].text = total.ToString();
 		}
 	}
 
-	void LoadLevel(int index) {
-		if (courseObject) Destroy(courseObject.gameObject);
-		GameObject course = Instantiate(coursePrefabs[index], Vector3.zero, Quaternion.identity) as GameObject;
-		courseObject = course.GetComponent<Transform>();
+	void Update() {
 
-		course.GetComponent<CourseController>().Begin(this);
-	}
-
-	void OnGUI() {
 		if (this.state == Gamestate.Menu) {
-			if (GUILayout.Button("Practice")) {
-				ChangeState(Gamestate.Practice);
-			}
-			if (GUILayout.Button("Game 1")) {
-				ChangeState(Gamestate.Game1);
-			}
-			if (GUILayout.Button("Game 2")) {
-				ChangeState(Gamestate.Game2);
-			}
+			ingameScore.text = "";
+		} else if (this.state == Gamestate.Practice) {
+			ingameScore.text = "Hole " + (practiceCourse.currentHole + 1) +
+				"\nPar: " + practiceCourse.holes[practiceCourse.currentHole].par +
+				"\nScore: " + practiceCourse.holes[practiceCourse.currentHole].score +
+				"\nPower: " + Mathf.Round(practiceCourse.holes[practiceCourse.currentHole].ballPower / 2.0f) + "%";
+		} else if (this.state == Gamestate.Game) {
+			ingameScore.text = "Hole " + (mainCourse.randomHoleOrder[mainCourse.currentHole] + 1) +
+				"\nPar: " + mainCourse.holes[mainCourse.randomHoleOrder[mainCourse.currentHole]].par +
+				"\nScore: " + mainCourse.holes[mainCourse.randomHoleOrder[mainCourse.currentHole]].score +
+				"\nPower: " + Mathf.Round(mainCourse.holes[mainCourse.randomHoleOrder[mainCourse.currentHole]].ballPower / 2.0f) + "%";
+		} else if (this.state == Gamestate.GameScore) {
+			ingameScore.text = "";
+		} else if (this.state == Gamestate.Transition) {
+			ingameScore.text = "";
 		}
+	}
+
+	void Event_LoadPractice() {
+		ChangeState(Gamestate.Practice);
+	}
+
+	void Event_LoadStudy() {
+		ChangeState(Gamestate.Game);
+	}
+
+	void Event_ReturnToMenu() {
+		Debug.Log("fired event 1");
+		testTestTest();
+	}
+	void testTestTest(){
+		Debug.Log("fired event 2");
+		mainCourse.StartCoroutine(mainCourse.ReturnToMenu());
 	}
 }
 
@@ -49,7 +95,7 @@ public class GamestateController : MonoBehaviour {
 public enum Gamestate {
 	Menu,
 	Practice,
-	Game1,
-	Game2,
-	Score
+	Game,
+	GameScore,
+	Transition
 }
