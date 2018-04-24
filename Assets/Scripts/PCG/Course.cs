@@ -2,11 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// TODO cleanup all code
-// TODO add code comments
-// TODO maybe do something about the obstacle placement, possibly factor in size of square when sizing the obstacle
-// TODO ignore overlapping courses
-
 public class Course {
     public List<Segment> pieces = new List<Segment>();
 
@@ -237,9 +232,7 @@ public class Course {
 
         float w = (pieces[pieces.Count - 1].width * 3) / (2 * 4);
         float l = (pieces[pieces.Count - 1].length * 3) / (2 * 4);
-        // Vector3 p  = pieces[pieces.Count - 1].center + new Vector3(Random.Range(-w, w), 0.0f, Random.Range(-l, l));
-
-        // GameObject hole = GameObject.Instantiate(holePrefab, p, Quaternion.identity) as GameObject;
+        
         GameObject hole = new GameObject("Hole");
         hole.GetComponent<Transform>().position = pieces[pieces.Count - 1].center + new Vector3(Random.Range(-w, w), 0.0f, Random.Range(-l, l));
         hole.GetComponent<Transform>().parent = courseGO.GetComponent<Transform>();

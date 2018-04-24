@@ -22,9 +22,8 @@ public class GamestateController : MonoBehaviour {
 		studyButton.onClick.AddListener(Event_LoadStudy);
 		returnButton.onClick.AddListener(Event_ReturnToMenu);
 
-
-				menuPanel.gameObject.SetActive((this.state == Gamestate.Menu));
-				scoreboardPanel.gameObject.SetActive((this.state == Gamestate.GameScore));
+		menuPanel.gameObject.SetActive((this.state == Gamestate.Menu));
+		scoreboardPanel.gameObject.SetActive((this.state == Gamestate.GameScore));
 	}
 
 	public void ChangeState(Gamestate state) {

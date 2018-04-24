@@ -96,49 +96,4 @@ public class CourseController : MonoBehaviour {
 			}
 		}
 	}
-
-	// void OnGUI() {
-	// 	if (gamestate.state == Gamestate.Score) {
-	// 		int scoreTotal = 0, parTotal = 0;
-	//
-	// 		GUILayout.BeginHorizontal();
-	// 		GUILayout.BeginVertical();
-	//
-	// 		GUILayout.Label("Hole", GUILayout.ExpandWidth(true));
-	// 		for (int i = 0; i < holes.Count; i++) {
-	// 			GUILayout.Label((i + 1).ToString(), GUILayout.ExpandWidth(true));
-	// 		}
-	// 		GUILayout.Space(50);
-	// 		GUILayout.Label("Total", GUILayout.ExpandWidth(true));
-	//
-	// 		GUILayout.EndVertical();
-	// 		GUILayout.BeginVertical();
-	//
-	// 		GUILayout.Label("Score", GUILayout.ExpandWidth(true));
-	// 		for (int i = 0; i < holes.Count; i++) {
-	// 			GUILayout.Label(holes[i].score.ToString(), GUILayout.ExpandWidth(true));
-	// 			scoreTotal+= holes[i].score;
-	// 		}
-	// 		GUILayout.Space(50);
-	// 		GUILayout.Label(scoreTotal.ToString(), GUILayout.ExpandWidth(true));
-	//
-	// 		GUILayout.EndVertical();
-	// 		GUILayout.BeginVertical();
-	//
-	// 		GUILayout.Label("Par", GUILayout.ExpandWidth(true));
-	// 		for (int i = 0; i < holes.Count; i++) {
-	// 			GUILayout.Label(holes[i].par.ToString(), GUILayout.ExpandWidth(true));
-	// 			parTotal+= holes[i].par;
-	// 		}
-	// 		GUILayout.Space(50);
-	// 		GUILayout.Label(parTotal.ToString(), GUILayout.ExpandWidth(true));
-	//
-	// 		GUILayout.EndVertical();
-	// 		GUILayout.EndHorizontal();
-	//
-	// 		if (GUILayout.Button("Return to Menu")) {
-	// 			StartCoroutine(ReturnToMenu());
-	// 		}
-	// 	}
-	// }
 }
